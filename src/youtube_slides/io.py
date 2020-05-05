@@ -20,13 +20,13 @@ class YouTubeDataSet(AbstractDataSet):
     def __init__(self, path):
         self._path = os.path.expanduser(path)
         self._data_dir = os.path.join(self._path, "data")
-        os.makedirs(self._data_dir, exist_ok=True)
 
     def _save(self, urls: List[str]) -> None:
-
         for url in urls:
             vid = os.path.basename(url).split("=")[1]
             output_yaml_filepath = os.path.join(self._path, f"{vid}.yaml")
+            video_data_dir = os.path.join(self._data_dir, vid)
+            os.makedirs(video_data_dir, exist_ok=True)
 
             if os.path.exists(output_yaml_filepath):
                 self._logger.info(f"Skipping {vid}. Already exists.")
@@ -38,7 +38,7 @@ class YouTubeDataSet(AbstractDataSet):
                 filename_format = "%(id)s.%(ext)s"
                 return subprocess.check_output(
                     ["youtube-dl"] + list(args) + ["-o", filename_format, url],
-                    cwd=self._data_dir,
+                    cwd=video_data_dir,
                 ).decode("utf8").strip()
 
             subs_list = ydl("--list-subs")
@@ -46,7 +46,7 @@ class YouTubeDataSet(AbstractDataSet):
 
             title = ydl("--get-title")
 
-            description_path = os.path.join(self._data_dir, f"{vid}.description")
+            description_path = os.path.join(video_data_dir, f"{vid}.description")
             if os.path.exists(description_path):
                 os.remove(description_path)
 
@@ -61,7 +61,7 @@ class YouTubeDataSet(AbstractDataSet):
                         return l.split(": ")[1]
 
             subtitle_filename = _extract_subtitle_filename(write_output)
-            subtitle_path = os.path.join(self._data_dir, subtitle_filename)
+            subtitle_path = os.path.join(video_data_dir, subtitle_filename)
 
             with open(description_path, encoding="utf8") as f:
                 description = f.read()
@@ -70,7 +70,7 @@ class YouTubeDataSet(AbstractDataSet):
                 subtitles = f.read()
 
             filename = [
-                name for name in os.listdir(self._data_dir)
+                name for name in os.listdir(video_data_dir)
                 if name != f"{vid}.description" and name != subtitle_filename
             ][0]
 
@@ -78,7 +78,7 @@ class YouTubeDataSet(AbstractDataSet):
                 yaml.dump({
                     "id": vid,
                     "title": title,
-                    "video_filepath": os.path.join(self._data_dir, filename),
+                    "video_filepath": os.path.join(video_data_dir, filename),
                     "description": description,
                     "subtitles": subtitles,
                 }, f)
