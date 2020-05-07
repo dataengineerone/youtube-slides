@@ -1,6 +1,6 @@
 import base64
 from io import BytesIO
-from typing import Dict, List
+from typing import Dict, List, Callable
 
 from PIL import Image
 
@@ -10,7 +10,7 @@ from youtube_slides.io import YouTubeData
 def _combine_images_and_subtitles(
         title: str,
         description: str,
-        images: Dict[str, Image.Image],
+        images: Dict[str, Callable],
         subtitles: Dict[str, List[str]]
 ) -> str:
     keys = subtitles.keys()
@@ -29,12 +29,14 @@ def _combine_images_and_subtitles(
 
     def _generate_image_tag(target_key):
         img_template = '<img src="data:image/png;base64, %(b64_image)s" alt="Image" />'
-        image = images.get(target_key)
-        if image is None:
+        callable_image = images.get(target_key)
+        if callable_image is None:
             return ""
+        image = callable_image()
         buffered = BytesIO()
         image.save(buffered, format="JPEG")
         b64_image = base64.b64encode(buffered.getvalue()).decode("UTF8")
+        image.close()
         return img_template % {"b64_image": b64_image}
 
     for key in keys:
