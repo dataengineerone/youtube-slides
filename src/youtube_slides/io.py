@@ -17,8 +17,9 @@ class YouTubeData(NamedTuple):
 
 class YouTubeDataSet(AbstractDataSet):
 
-    def __init__(self, path):
+    def __init__(self, path, language="en"):
         self._path = os.path.expanduser(path)
+        self._language = language
         self._data_dir = os.path.join(self._path, "data")
 
     def _save(self, urls: List[str]) -> None:
@@ -42,7 +43,19 @@ class YouTubeDataSet(AbstractDataSet):
                 ).decode("utf8").strip()
 
             subs_list = ydl("--list-subs")
-            has_subs = "has no subtitles" not in subs_list
+
+            def _check_if_language_available(raw_subs_list):
+                possible_subtitles = raw_subs_list.split("Available subtitles ")
+                if len(possible_subtitles) <= 1:
+                    return False
+                found_subtitles = possible_subtitles[1]
+                for sub in found_subtitles.split("\n"):
+                    if sub.strip().startswith(self._language):
+                        return True
+                else:
+                    return False
+
+            has_subs = _check_if_language_available(subs_list)
 
             title = ydl("--get-title")
 
@@ -61,13 +74,15 @@ class YouTubeDataSet(AbstractDataSet):
                         return l.split(": ")[1]
 
             subtitle_filename = _extract_subtitle_filename(write_output)
-            subtitle_path = os.path.join(video_data_dir, subtitle_filename)
+            if subtitle_filename is not None:
+                subtitle_path = os.path.join(video_data_dir, subtitle_filename)
+                with open(subtitle_path, encoding="utf8") as f:
+                    subtitles = f.read()
+            else:
+                subtitles = ""
 
             with open(description_path, encoding="utf8") as f:
                 description = f.read()
-
-            with open(subtitle_path, encoding="utf8") as f:
-                subtitles = f.read()
 
             filename = [
                 name for name in os.listdir(video_data_dir)
@@ -95,7 +110,8 @@ class YouTubeDataSet(AbstractDataSet):
     def _describe(self):
         return dict(
             path=self._path,
-            data_dir=self._data_dir
+            data_dir=self._data_dir,
+            language=self._language,
         )
 
 

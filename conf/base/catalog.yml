@@ -43,6 +43,7 @@
 youtube_dl:
   type: youtube_slides.io.YouTubeDataSet
   path: data/01_raw/youtube_dl
+  language: en
 
 
 processed_video_times:
