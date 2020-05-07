@@ -10,13 +10,14 @@ from youtube_slides.io import YouTubeData
 def _combine_images_and_subtitles(
         title: str,
         description: str,
-        images: Dict[str, Image.Image], subtitles: Dict[str, List[str]]
+        images: Dict[str, Image.Image],
+        subtitles: Dict[str, List[str]]
 ) -> str:
     keys = subtitles.keys()
     caption_rows = []
     template = """
 <div class='.caption-row'>
-    <img src="data:image/png;base64, %(b64_image)s" alt="Red dot" />
+    %(img)s
     <br/>
     <blockquote>
     <p>
@@ -25,14 +26,21 @@ def _combine_images_and_subtitles(
     </blockquote>
 </div>
 """
-    for key in keys:
-        image = images[key]
-        caption_list = subtitles[key]
+
+    def _generate_image_tag(target_key):
+        img_template = '<img src="data:image/png;base64, %(b64_image)s" alt="Image" />'
+        image = images.get(target_key)
+        if image is None:
+            return ""
         buffered = BytesIO()
         image.save(buffered, format="JPEG")
         b64_image = base64.b64encode(buffered.getvalue()).decode("UTF8")
+        return img_template % {"b64_image": b64_image}
+
+    for key in keys:
+        caption_list = subtitles[key]
         caption = " ".join(caption_list)
-        output = template % {"b64_image": b64_image, "caption": caption}
+        output = template % {"img": _generate_image_tag(key), "caption": caption}
         caption_rows.append(output)
 
     body = "\n".join(caption_rows)

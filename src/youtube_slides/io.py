@@ -109,6 +109,8 @@ class Screenshots(AbstractDataSet):
             video_dir = os.path.join(self._path, vid)
             os.makedirs(video_dir, exist_ok=True)
             for timing, screenshot in screenshots.items():
+                if screenshot is None:
+                    continue
                 screenshot_filepath = os.path.join(video_dir, f"{timing}.png")
                 screenshot.save(screenshot_filepath)
 
