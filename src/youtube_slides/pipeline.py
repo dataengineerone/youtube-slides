@@ -58,7 +58,7 @@ def create_pipelines(**kwargs) -> Dict[str, Pipeline]:
                  inputs=["youtube_dl", "params:time_segment_seconds"],
                  outputs="keyed_subtitles"),
             node(capture_frames,
-                 inputs=["youtube_dl", "keyed_subtitles", "processed_video_times"],
+                inputs=["youtube_dl", "params:minimum_frame_difference", "keyed_subtitles", "processed_video_times"],
                  outputs=["screenshots", "processed_video_times!"]),
             node(combine_images_and_subtitles,
                  inputs=["youtube_dl", "screenshots", "keyed_subtitles"],

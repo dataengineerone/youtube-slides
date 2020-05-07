@@ -11,6 +11,7 @@ from youtube_slides.io import YouTubeData
 
 
 def capture_frames(videos: Dict[str, YouTubeData],
+        minimum_frame_difference: int,
                    keyed_subtitles: Dict[str, Dict],
                    processed_video_times: Dict[str, List]
                    ) -> Tuple[Dict[str, Dict[str, Image.Image]], Dict[str, List]]:
@@ -19,7 +20,7 @@ def capture_frames(videos: Dict[str, YouTubeData],
     for vid, video in videos.items():
         times_already_processed = processed_video_times.get(vid, [])
         times_to_process = list(sorted(list(set(keyed_subtitles[vid].keys()) - set(times_already_processed))))
-        video_frames = _capture_frames(video.video_filepath, times_to_process)
+        video_frames = _capture_frames(video.video_filepath, times_to_process, minimum_frame_difference)
         newly_processed_times = list(video_frames.keys())
         new_processed_video_times[vid] = list(
             sorted(list(set(times_to_process + times_already_processed + newly_processed_times)))
@@ -28,7 +29,7 @@ def capture_frames(videos: Dict[str, YouTubeData],
     return captured_frames, new_processed_video_times
 
 
-def _capture_frames(video_filepath: str, aggregate_times: List[str]) -> Dict[str, Image.Image]:
+def _capture_frames(video_filepath: str, aggregate_times: List[str], minimum_frame_difference: int) -> Dict[str, Image.Image]:
     temp_dir = tempfile.mkdtemp()
 
     screenshots = {}
@@ -55,17 +56,17 @@ def _capture_frames(video_filepath: str, aggregate_times: List[str]) -> Dict[str
                 wrote_successfully = True
                 break
 
-        is_10percent_different_from_last_frame = True
+        is_minimally_different_from_last_frame = True
         if frame is not None:
             if prev_gray_scale_frame is None:
                 prev_gray_scale_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             else:
                 current_gray_scale_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 (score, _) = compare_ssim(current_gray_scale_frame, prev_gray_scale_frame, full=True)
-                is_10percent_different_from_last_frame = score <= 0.9
+                is_minimally_different_from_last_frame = (100 - score * 100) > minimum_frame_difference
                 prev_gray_scale_frame = current_gray_scale_frame
 
-        if wrote_successfully and is_10percent_different_from_last_frame:
+        if wrote_successfully and is_minimally_different_from_last_frame:
             image = Image.open(target_path)
             screenshots[raw_timing] = image
         else:

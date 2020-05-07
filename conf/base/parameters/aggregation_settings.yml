@@ -1,1 +1,2 @@
 time_segment_seconds: 60
+minimum_frame_difference: 10
