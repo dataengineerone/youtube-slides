@@ -73,5 +73,5 @@ def combine_images_and_subtitles(
             screenshots[vid],
             keyed_subtitles[vid]
         )
-        parts[vid] = combo
+        parts[youtube_data.title] = combo
     return parts
