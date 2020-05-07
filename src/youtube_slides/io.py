@@ -140,7 +140,9 @@ class Screenshots(AbstractDataSet):
             for screenshot_file in screenshot_files:
                 timing, ext = os.path.splitext(screenshot_file)
                 if ext == ".png":
-                    screenshots[timing] = Image.open(os.path.join(vid_path, screenshot_file))
+                    screenshot_path = os.path.join(vid_path, screenshot_file)
+                    with open(screenshot_path, 'rb') as f:
+                        screenshots[timing] = Image.open(f)
             parts[vid] = screenshots
         return parts
 
