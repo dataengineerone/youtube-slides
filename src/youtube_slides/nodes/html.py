@@ -31,7 +31,7 @@ def _combine_images_and_subtitles(
         img_template = '<img src="data:image/png;base64, %(b64_image)s" alt="Image" />'
         callable_image = images.get(target_key)
         if callable_image is None:
-            return ""
+            return None
         image = callable_image()
         buffered = BytesIO()
         image.save(buffered, format="JPEG")
@@ -39,10 +39,19 @@ def _combine_images_and_subtitles(
         image.close()
         return img_template % {"b64_image": b64_image}
 
+    current_caption_list = []
     for key in keys:
-        caption_list = subtitles[key]
-        caption = " ".join(caption_list)
+        image_tag = _generate_image_tag(key)
+        current_caption_list += subtitles[key]
+        if image_tag is None:
+            continue
+        caption = " ".join(current_caption_list)
         output = template % {"img": _generate_image_tag(key), "caption": caption}
+        caption_rows.append(output)
+        current_caption_list = []
+    if len(current_caption_list) > 0:
+        caption = " ".join(current_caption_list)
+        output = template % {"img": "", "caption": caption}
         caption_rows.append(output)
 
     body = "\n".join(caption_rows)
