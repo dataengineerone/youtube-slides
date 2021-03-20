@@ -33,7 +33,7 @@ ipython==7.14.0
 ipython-genutils==0.2.0
 itsdangerous==1.1.0
 jedi==0.17.0
-Jinja2==2.11.2
+Jinja2==2.11.3
 jinja2-time==0.2.0
 jmespath==0.9.5
 kedro==0.15.9
